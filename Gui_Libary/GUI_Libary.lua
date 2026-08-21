@@ -19,7 +19,7 @@ if parent:FindFirstChild("SketchGUILibrary") then
 end
 
 local Library = {}
-Library.Version = "v2.1.7"
+Library.Version = "v2.1.8"
 Library.ThemeColor = Library.ThemeColor
 Library.Flags = {}
 Library.SettingsFileName = "config1"
@@ -274,6 +274,7 @@ function Library.New(titleText, customThemeColor)
     end)
 
     -- Title Bar
+-- Title Bar
     local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
     TopBar.Size = UDim2.new(1, 0, 0, 35)
@@ -282,9 +283,18 @@ function Library.New(titleText, customThemeColor)
     TopBar.ZIndex = 3
     TopBar.Parent = MainFrame
 
+    local Logo = Instance.new("ImageLabel")
+    Logo.Name = "Logo"
+    Logo.Size = UDim2.new(0, 25, 0, 25)
+    Logo.Position = UDim2.new(0, 5, 0.5, -12.5)
+    Logo.BackgroundTransparency = 1
+    Logo.Image = "rbxassetid://107742855012780"
+    Logo.ZIndex = 3
+    Logo.Parent = TopBar
+
     local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Size = UDim2.new(1, -100, 1, 0)
-    TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+    TitleLabel.Size = UDim2.new(1, -125, 1, 0)
+    TitleLabel.Position = UDim2.new(0, 35, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Font = Enum.Font.SourceSansBold
     TitleLabel.Text = titleText or "GUI Library"
