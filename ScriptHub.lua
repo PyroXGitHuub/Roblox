@@ -11,6 +11,26 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
 
+-- ==========================================
+-- CONFIGURATION (Hier kannst du deine Skripte anpassen)
+-- ==========================================
+local Config = {
+    UniversalScript = {
+        Title = "PyroX Universal Script (Down)",
+        Desc = "its down i will make a remake",
+        IconId = 101800459005792,
+        Url = "https://down"
+    },
+    GameScripts = {
+        [128039018996175] = {
+            Title = "The Walking Death Online 3 Script",
+            Desc = "a script made for twdo3",
+            IconId = 87599473539232,
+            Url = "https://raw.githubusercontent.com/PyroX5343/RobloxCheats/refs/heads/main/Games/TWDO3.lua"
+        },
+    }
+}
+
 -- Verhindern, dass das GUI doppelt geladen wird
 if CoreGui:FindFirstChild("PyroXHubGUI") then
     CoreGui.PyroXHubGUI:Destroy()
@@ -38,13 +58,13 @@ end
 playSound(7767565587)
 
 -- ==========================================
--- NOTIFICATION SYSTEM (NEU)
+-- NOTIFICATION SYSTEM
 -- ==========================================
 local NotifyGui = Instance.new("ScreenGui")
 NotifyGui.Name = "PyroXNotifications"
 NotifyGui.Parent = CoreGui
 NotifyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-NotifyGui.DisplayOrder = 9999999 -- Immer ganz oben
+NotifyGui.DisplayOrder = 9999999
 
 local NotifyList = Instance.new("Frame")
 NotifyList.Size = UDim2.new(0, 260, 1, -50)
@@ -58,10 +78,13 @@ NotifyLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 NotifyLayout.Padding = UDim.new(0, 12)
 NotifyLayout.Parent = NotifyList
 
+-- Tabelle zum Verfolgen aktiver Animations-Gradienten in Notifications
+local activeNotifGradients = {}
+
 local function sendNotification(title, text, duration)
     local notif = Instance.new("Frame")
     notif.Size = UDim2.new(1, 0, 0, 65)
-    notif.BackgroundColor3 = Color3.fromRGB(16, 14, 22)
+    notif.BackgroundColor3 = Color3.fromRGB(12, 9, 18)
     notif.BackgroundTransparency = 1
     notif.Parent = NotifyList
     
@@ -69,11 +92,33 @@ local function sendNotification(title, text, duration)
     corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = notif
     
+    -- Solider Basis-Stroke (schwarz) - Noch dünner gemacht (1)
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(168, 85, 247)
-    stroke.Thickness = 1.5
+    stroke.Color = Color3.fromRGB(0, 0, 0)
+    stroke.Thickness = 1
     stroke.Transparency = 1
     stroke.Parent = notif
+
+    -- Animierter Glow-Stroke für die Notifications - Noch dünner gemacht (1)
+    local notifGlowStroke = Instance.new("UIStroke")
+    notifGlowStroke.Name = "NotifGlowStroke"
+    notifGlowStroke.Color = Color3.fromRGB(186, 86, 253)
+    notifGlowStroke.Thickness = 1.8
+    notifGlowStroke.Transparency = 1
+    notifGlowStroke.Parent = notif
+
+    local notifGlowGradient = Instance.new("UIGradient")
+    notifGlowGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(0.15, 0),
+        NumberSequenceKeypoint.new(0.35, 1),
+        NumberSequenceKeypoint.new(0.65, 1),
+        NumberSequenceKeypoint.new(0.85, 0),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    notifGlowGradient.Parent = notifGlowStroke
+
+    table.insert(activeNotifGradients, notifGlowGradient)
 
     local tLbl = Instance.new("TextLabel")
     tLbl.Size = UDim2.new(1, -20, 0, 20)
@@ -100,20 +145,29 @@ local function sendNotification(title, text, duration)
     dLbl.TextTransparency = 1
     dLbl.Parent = notif
     
-    playSound(106351605533621) -- Sanfter Notifikations-Sound
+    playSound(106351605533621)
     
-    -- Transparenz auf 0.2 für Glass Effekt bei Notifications
     TweenService:Create(notif, TweenInfo.new(0.3), {BackgroundTransparency = 0.2}):Play()
     TweenService:Create(stroke, TweenInfo.new(0.3), {Transparency = 0}):Play()
+    TweenService:Create(notifGlowStroke, TweenInfo.new(0.3), {Transparency = 0}):Play()
     TweenService:Create(tLbl, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
     TweenService:Create(dLbl, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
     
     task.delay(duration or 3, function()
         TweenService:Create(notif, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
         TweenService:Create(stroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
+        TweenService:Create(notifGlowStroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
         TweenService:Create(tLbl, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
         TweenService:Create(dLbl, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
         task.wait(0.3)
+        
+        for i, grad in ipairs(activeNotifGradients) do
+            if grad == notifGlowGradient then
+                table.remove(activeNotifGradients, i)
+                break
+            end
+        end
+        
         notif:Destroy()
     end)
 end
@@ -124,9 +178,9 @@ ScreenGui.Name = "PyroXHubGUI"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.DisplayOrder = 999999
+ScreenGui.DisplayOrder = 999995
 
--- Floating Toggle GUI (Unten rechts zum Wiederaufrufen nach Minimierung)
+-- Floating Toggle GUI
 local ToggleGui = Instance.new("ScreenGui")
 ToggleGui.Name = "PyroXHubToggle"
 ToggleGui.Parent = CoreGui
@@ -138,8 +192,8 @@ local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "ToggleBtn"
 ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
 ToggleBtn.Position = UDim2.new(1, -75, 1, -75)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(12, 10, 18)
-ToggleBtn.BackgroundTransparency = 0.4 -- Glass Effekt
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(8, 6, 12)
+ToggleBtn.BackgroundTransparency = 0.4
 ToggleBtn.Text = "P"
 ToggleBtn.TextSize = 24
 ToggleBtn.AutoButtonColor = false
@@ -152,10 +206,10 @@ ToggleCorner.Parent = ToggleBtn
 
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Color = Color3.fromRGB(168, 85, 247)
-ToggleStroke.Thickness = 2.5
+ToggleStroke.Thickness = 1.5 -- Dünner gemacht (1.5 statt 2.5)
 ToggleStroke.Parent = ToggleBtn
 
--- Fullscreen Hintergrund-Overlay mit Lila-Schwarz Gradient & Abdunklung
+-- Fullscreen Hintergrund-Overlay
 local BGOverlay = Instance.new("Frame")
 BGOverlay.Name = "BackgroundOverlay"
 BGOverlay.Size = UDim2.new(1, 0, 1, 0)
@@ -166,15 +220,15 @@ BGOverlay.Parent = ScreenGui
 
 local BGGradient = Instance.new("UIGradient")
 BGGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 10, 80)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 5, 8))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(110, 35, 165)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(4, 3, 7))
 })
 BGGradient.Rotation = 90
 BGGradient.Parent = BGOverlay
 
 TweenService:Create(BGOverlay, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundTransparency = 0.2}):Play()
 
--- Blur-Effekt intensivieren
+-- Blur-Effekt
 local blur = Instance.new("BlurEffect")
 blur.Name = "PyroXBlur"
 blur.Size = 0
@@ -186,49 +240,82 @@ local originalFOV = camera.FieldOfView
 TweenService:Create(camera, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {FieldOfView = originalFOV - 12}):Play()
 
 -- ==========================================
--- LOADING SCREEN CONTAINER (Nur beim Start)
+-- LOADING SCREEN
 -- ==========================================
+local LoadingOverlay = Instance.new("Frame")
+LoadingOverlay.Name = "LoadingOverlay"
+LoadingOverlay.Size = UDim2.new(1, 0, 1, 0)
+LoadingOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+LoadingOverlay.BackgroundTransparency = 0
+LoadingOverlay.BorderSizePixel = 0
+LoadingOverlay.ZIndex = 10
+LoadingOverlay.Parent = ScreenGui
+
+local LoadingBgImage = Instance.new("ImageLabel")
+LoadingBgImage.Name = "LoadingBgImage"
+LoadingBgImage.Size = UDim2.new(0, 480, 0, 480)
+LoadingBgImage.AnchorPoint = Vector2.new(0.5, 0.5)
+LoadingBgImage.Position = UDim2.new(0.5, 0, 0.33, 0)
+LoadingBgImage.BackgroundTransparency = 1
+LoadingBgImage.Image = "rbxassetid://114390254506313"
+LoadingBgImage.ScaleType = Enum.ScaleType.Fit
+LoadingBgImage.ZIndex = 11
+LoadingBgImage.Parent = LoadingOverlay
+
 local LoadingContainer = Instance.new("Frame")
 LoadingContainer.Name = "LoadingContainer"
-LoadingContainer.Size = UDim2.new(0, 480, 0, 240)
+LoadingContainer.Size = UDim2.new(0, 480, 0, 180)
 LoadingContainer.AnchorPoint = Vector2.new(0.5, 0.5)
-LoadingContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+LoadingContainer.Position = UDim2.new(0.5, 0, 0.74, 0)
 LoadingContainer.BackgroundTransparency = 1
-LoadingContainer.Parent = ScreenGui
+LoadingContainer.ZIndex = 12
+LoadingContainer.Parent = LoadingOverlay
 
 local SplashTitle = Instance.new("TextLabel")
 SplashTitle.Name = "SplashTitle"
-SplashTitle.Size = UDim2.new(1, 0, 0, 60)
-SplashTitle.Position = UDim2.new(0, 0, 0, 15)
+SplashTitle.Size = UDim2.new(1, 0, 0, 40)
+SplashTitle.Position = UDim2.new(0, 0, 0, 0)
 SplashTitle.BackgroundTransparency = 1
-SplashTitle.Text = "PYROX HUB"
+SplashTitle.Text = ""
 SplashTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-SplashTitle.TextSize = 42
+SplashTitle.TextSize = 36
 SplashTitle.Font = Enum.Font.GothamBlack
+SplashTitle.ZIndex = 12
 SplashTitle.Parent = LoadingContainer
+
+local SplashTitleGradient = Instance.new("UIGradient")
+SplashTitleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(216, 180, 254))
+})
+SplashTitleGradient.Rotation = 90
+SplashTitleGradient.Parent = SplashTitle
 
 local SplashGlow = Instance.new("UIStroke")
 SplashGlow.Color = Color3.fromRGB(168, 85, 247)
-SplashGlow.Thickness = 2.5
+SplashGlow.Thickness = 1 -- Dünner gemacht (1 statt 2)
+SplashGlow.Transparency = 0.3
 SplashGlow.Parent = SplashTitle
 
 local LoadingStatus = Instance.new("TextLabel")
 LoadingStatus.Size = UDim2.new(1, 0, 0, 20)
-LoadingStatus.Position = UDim2.new(0, 0, 0, 80)
+LoadingStatus.Position = UDim2.new(0, 0, 0, 50)
 LoadingStatus.BackgroundTransparency = 1
 LoadingStatus.Text = "INITIALIZING CORE SYSTEMS..."
-LoadingStatus.TextColor3 = Color3.fromRGB(168, 85, 247)
+LoadingStatus.TextColor3 = Color3.fromRGB(186, 86, 253)
 LoadingStatus.TextSize = 11
 LoadingStatus.Font = Enum.Font.GothamBold
+LoadingStatus.ZIndex = 12
 LoadingStatus.Parent = LoadingContainer
 
 local BarBg = Instance.new("Frame")
 BarBg.Size = UDim2.new(0, 380, 0, 8)
 BarBg.AnchorPoint = Vector2.new(0.5, 0)
-BarBg.Position = UDim2.new(0.5, 0, 0, 130)
-BarBg.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
-BarBg.BackgroundTransparency = 0.5 -- Glass Effekt für Ladebalken
+BarBg.Position = UDim2.new(0.5, 0, 0, 95)
+BarBg.BackgroundColor3 = Color3.fromRGB(14, 10, 22)
+BarBg.BackgroundTransparency = 0.5
 BarBg.BorderSizePixel = 0
+BarBg.ZIndex = 12
 BarBg.Parent = LoadingContainer
 
 local BarBgCorner = Instance.new("UICorner")
@@ -244,6 +331,7 @@ local BarFill = Instance.new("Frame")
 BarFill.Size = UDim2.new(0, 0, 1, 0)
 BarFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 BarFill.BorderSizePixel = 0
+BarFill.ZIndex = 13
 BarFill.Parent = BarBg
 
 local BarFillCorner = Instance.new("UICorner")
@@ -252,99 +340,110 @@ BarFillCorner.Parent = BarFill
 
 local BarGradient = Instance.new("UIGradient")
 BarGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 40, 200)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(186, 86, 253)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(216, 180, 254))
 })
 BarGradient.Parent = BarFill
 
 local PercentLabel = Instance.new("TextLabel")
 PercentLabel.Size = UDim2.new(1, 0, 0, 20)
-PercentLabel.Position = UDim2.new(0, 0, 0, 148)
+PercentLabel.Position = UDim2.new(0, 0, 0, 112)
 PercentLabel.BackgroundTransparency = 1
 PercentLabel.Text = "0%"
 PercentLabel.TextColor3 = Color3.fromRGB(140, 130, 160)
 PercentLabel.TextSize = 11
 PercentLabel.Font = Enum.Font.GothamMedium
+PercentLabel.ZIndex = 12
 PercentLabel.Parent = LoadingContainer
 
 -- ==========================================
--- HAUPTFENSTER (Wird erst nach dem Laden gezeigt)
+-- HAUPTFENSTER
 -- ==========================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 680, 0, 520)
+MainFrame.Size = UDim2.new(0, 680, 0, 420)
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 MainFrame.Position = UDim2.new(0.5, 0, 0.42, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
+MainFrame.BackgroundColor3 = Color3.fromRGB(8, 6, 12)
 MainFrame.BackgroundTransparency = 1
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
 MainFrame.Parent = ScreenGui
 
+local MainScale = Instance.new("UIScale")
+MainScale.Name = "MainScale"
+MainScale.Parent = MainFrame
+
+local function updateScale()
+    local screenSize = camera.ViewportSize
+    local scale = math.min(screenSize.X / 1280, screenSize.Y / 720)
+    MainScale.Scale = math.clamp(scale, 0.6, 1.4)
+end
+camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
+updateScale()
+
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 14)
 MainCorner.Parent = MainFrame
 
+-- 1. Solider, schwarzer Basis-Stroke - Dünner gemacht (1.5)
 local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(168, 85, 247)
+MainStroke.Name = "MainStroke"
+MainStroke.Color = Color3.fromRGB(0, 0, 0)
 MainStroke.Transparency = 1
-MainStroke.Thickness = 2.5
+MainStroke.Thickness = 1.4
 MainStroke.Parent = MainFrame
 
-local StrokeGradient = Instance.new("UIGradient")
-StrokeGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(168, 85, 247)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(216, 180, 254)), 
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(168, 85, 247))
+-- 2. Animierter Lila-Glow-Stroke - Dünner gemacht (1)
+local GlowStroke = Instance.new("UIStroke")
+GlowStroke.Name = "GlowStroke"
+GlowStroke.Color = Color3.fromRGB(186, 86, 253)
+GlowStroke.Transparency = 1
+GlowStroke.Thickness = 1.5
+GlowStroke.Parent = MainFrame
+
+local GlowGradient = Instance.new("UIGradient")
+GlowGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 1),
+    NumberSequenceKeypoint.new(0.15, 0),
+    NumberSequenceKeypoint.new(0.35, 1),
+    NumberSequenceKeypoint.new(0.65, 1),
+    NumberSequenceKeypoint.new(0.85, 0),
+    NumberSequenceKeypoint.new(1, 1)
 })
-StrokeGradient.Parent = MainStroke
-StrokeGradient.Offset = Vector2.new(-1, 0)
+GlowGradient.Parent = GlowStroke
 
--- Animationseinstellungen definieren
-local strokeTweenInfo = TweenInfo.new(
-    2.5,
-    Enum.EasingStyle.Linear,
-    Enum.EasingDirection.InOut,
-    -1,
-    false,
-    0
-)
-
--- Tween erstellen und sofort starten
-local animatedStrokeTween = TweenService:Create(StrokeGradient, strokeTweenInfo, {Offset = Vector2.new(1, 0)})
-animatedStrokeTween:Play()
-
--- Top-Emblem / Logo (VERGRÖßERT)
 local LogoContainer = Instance.new("Frame")
 LogoContainer.Name = "LogoContainer"
 LogoContainer.Size = UDim2.new(0, 50, 0, 50)
 LogoContainer.Position = UDim2.new(0.5, -25, 0, 15)
-LogoContainer.BackgroundColor3 = Color3.fromRGB(25, 15, 35)
-LogoContainer.BackgroundTransparency = 0.3 -- Glass Effekt
+LogoContainer.BackgroundColor3 = Color3.fromRGB(18, 10, 28)
+LogoContainer.BackgroundTransparency = 0.3
 LogoContainer.BorderSizePixel = 0
 LogoContainer.Parent = MainFrame
 
 local LogoCorner = Instance.new("UICorner")
-LogoCorner.CornerRadius = UDim.new(1, 0)
+LogoCorner.CornerRadius = UDim.new(0, 13)
 LogoCorner.Parent = LogoContainer
 
 local LogoStroke = Instance.new("UIStroke")
-LogoStroke.Color = Color3.fromRGB(216, 180, 254)
-LogoStroke.Thickness = 2
+LogoStroke.Color = Color3.fromRGB(29, 20, 33)
+LogoStroke.Thickness = 1 -- Dünner gemacht (1 statt 2)
 LogoStroke.Parent = LogoContainer
 
 local LogoImage = Instance.new("ImageLabel")
-LogoImage.Size = UDim2.new(0, 42, 0, 42) 
-LogoImage.Position = UDim2.new(0.5, -21, 0.5, -21) 
+LogoImage.Size = UDim2.new(0, 38, 0, 38) 
+LogoImage.AnchorPoint = Vector2.new(0.5, 0.5)
+LogoImage.Position = UDim2.new(0.5, 0, 0.5, 0) 
 LogoImage.BackgroundTransparency = 1
-LogoImage.Image = "rbxassetid://101800459005792"
+LogoImage.Image = "rbxassetid://107742855012780"
 LogoImage.Parent = LogoContainer
 
 local WelcomeLabel = Instance.new("TextLabel")
 WelcomeLabel.Size = UDim2.new(1, 0, 0, 20)
 WelcomeLabel.Position = UDim2.new(0, 0, 0, 72)
 WelcomeLabel.BackgroundTransparency = 1
-WelcomeLabel.Text = "WELCOME TO"
+WelcomeLabel.Text = "WELCOME TO RIFT HUB"
 WelcomeLabel.TextColor3 = Color3.fromRGB(168, 85, 247)
 WelcomeLabel.TextSize = 12
 WelcomeLabel.Font = Enum.Font.GothamBold
@@ -368,8 +467,8 @@ local SecondaryFrame = Instance.new("Frame")
 SecondaryFrame.Name = "SecondaryFrame"
 SecondaryFrame.Size = UDim2.new(0, 680, 0, 145)
 SecondaryFrame.Position = UDim2.new(0, 0, 1, 15)
-SecondaryFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
-SecondaryFrame.BackgroundTransparency = 0.45 -- Glass Effekt
+SecondaryFrame.BackgroundColor3 = Color3.fromRGB(8, 6, 12)
+SecondaryFrame.BackgroundTransparency = 0.45
 SecondaryFrame.BorderSizePixel = 0
 SecondaryFrame.Parent = MainFrame
 
@@ -378,21 +477,39 @@ SecCorner.CornerRadius = UDim.new(0, 14)
 SecCorner.Parent = SecondaryFrame
 
 local SecStroke = Instance.new("UIStroke")
-SecStroke.Color = Color3.fromRGB(168, 85, 247)
-SecStroke.Thickness = 2
+SecStroke.Name = "SecStroke"
+SecStroke.Color = Color3.fromRGB(0, 0, 0)
+SecStroke.Thickness = 1 -- Dünner gemacht (1 statt 2)
 SecStroke.Parent = SecondaryFrame
 
-local SecStrokeGradient = Instance.new("UIGradient")
-SecStrokeGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(168, 85, 247)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(216, 180, 254)), 
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(168, 85, 247))
-})
-SecStrokeGradient.Parent = SecStroke 
-SecStrokeGradient.Offset = Vector2.new(-1, 0)
+-- Animierter Stroke für Second Frame - Dünner gemacht (1)
+local SecGlowStroke = Instance.new("UIStroke")
+SecGlowStroke.Name = "SecGlowStroke"
+SecGlowStroke.Color = Color3.fromRGB(186, 86, 253)
+SecGlowStroke.Thickness = 2
+SecGlowStroke.Parent = SecondaryFrame
 
-local animatedSecStroke = TweenService:Create(SecStrokeGradient, strokeTweenInfo, {Offset = Vector2.new(1, 0)})
-animatedSecStroke:Play()
+local SecGlowGradient = Instance.new("UIGradient")
+SecGlowGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 1),
+    NumberSequenceKeypoint.new(0.15, 0),
+    NumberSequenceKeypoint.new(0.35, 1),
+    NumberSequenceKeypoint.new(0.65, 1),
+    NumberSequenceKeypoint.new(0.85, 0),
+    NumberSequenceKeypoint.new(1, 1)
+})
+SecGlowGradient.Parent = SecGlowStroke
+
+RunService.RenderStepped:Connect(function(dt)
+    GlowGradient.Rotation = (GlowGradient.Rotation + dt * 100) % 360
+    SecGlowGradient.Rotation = (SecGlowGradient.Rotation + dt * 100) % 360
+    
+    for _, grad in ipairs(activeNotifGradients) do
+        if grad and grad.Parent then
+            grad.Rotation = (grad.Rotation + dt * 100) % 360
+        end
+    end
+end)
 
 local SecHeader = Instance.new("TextLabel")
 SecHeader.Size = UDim2.new(1, -30, 0, 25)
@@ -431,8 +548,8 @@ ScrollPadding.Parent = HorizontalScroll
 local function addExternalScript(title, desc, iconId, loadstringFunc)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(0, 210, 0, 85)
-    card.BackgroundColor3 = Color3.fromRGB(16, 14, 22)
-    card.BackgroundTransparency = 0.4 -- Glass Effekt
+    card.BackgroundColor3 = Color3.fromRGB(12, 9, 18)
+    card.BackgroundTransparency = 0.4
     card.BorderSizePixel = 0
     card.Parent = HorizontalScroll
 
@@ -442,7 +559,7 @@ local function addExternalScript(title, desc, iconId, loadstringFunc)
 
     local cardStroke = Instance.new("UIStroke")
     cardStroke.Color = Color3.fromRGB(50, 30, 70)
-    cardStroke.Thickness = 1.2
+    cardStroke.Thickness = 1
     cardStroke.Parent = card
 
     local cardTitle = Instance.new("TextLabel")
@@ -471,8 +588,8 @@ local function addExternalScript(title, desc, iconId, loadstringFunc)
     local execBtn = Instance.new("TextButton")
     execBtn.Size = UDim2.new(1, -20, 0, 24)
     execBtn.Position = UDim2.new(0, 10, 0, 52)
-    execBtn.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
-    execBtn.BackgroundTransparency = 0.3 -- Glass Effekt
+    execBtn.BackgroundColor3 = Color3.fromRGB(20, 14, 30)
+    execBtn.BackgroundTransparency = 0.3
     execBtn.Text = "Execute Script"
     execBtn.TextColor3 = Color3.fromRGB(216, 180, 254)
     execBtn.TextSize = 10
@@ -492,12 +609,12 @@ local function addExternalScript(title, desc, iconId, loadstringFunc)
     execBtn.MouseEnter:Connect(function()
         playSound(106351605533621)
         TweenService:Create(btnStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(168, 85, 247)}):Play()
-        TweenService:Create(execBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 30, 60)}):Play()
+        TweenService:Create(execBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(35, 25, 55)}):Play()
     end)
 
     execBtn.MouseLeave:Connect(function()
         TweenService:Create(btnStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(60, 40, 90)}):Play()
-        TweenService:Create(execBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(25, 20, 35)}):Play()
+        TweenService:Create(execBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(20, 14, 30)}):Play()
     end)
 
     execBtn.MouseButton1Click:Connect(function()
@@ -519,42 +636,61 @@ addExternalScript("Bloxstrike", "bloxstrike script", 0, function()
     loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/2a98561d2db34084545ac12269b68961.lua"))()
 end)
 
+-- Lade-Logik & Fade-Out
 task.spawn(function()
-    task.wait(0.1)
+    task.wait(0.2)
     LoadingStatus.Text = "LOADING PREMIER SCRIPTS..."
     
-    local loadTweenInfo = TweenInfo.new(1.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-    TweenService:Create(BarFill, loadTweenInfo, {Size = UDim2.new(1, 0, 1, 0)}):Play()
-    
     local startTime = tick()
-    local duration = 1.4
+    local duration = 4.5
     local conn
+    
     conn = RunService.RenderStepped:Connect(function()
         local elapsed = tick() - startTime
         local alpha = math.clamp(elapsed / duration, 0, 1)
+        
+        local easedAlpha = TweenService:GetValue(alpha, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+        
+        BarFill.Size = UDim2.new(easedAlpha, 0, 1, 0)
         PercentLabel.Text = math.floor(alpha * 100) .. "%"
+        
         if alpha >= 1 then
             conn:Disconnect()
         end
     end)
     
-    task.delay(0.7, function()
+    task.delay(1.5, function()
         LoadingStatus.Text = "ESTABLISHING SECURE ENVIRONMENT..."
     end)
     
-    task.delay(1.2, function()
+    task.delay(3.5, function()
         LoadingStatus.Text = "READY!"
     end)
     
-    task.wait(1.45)
+    task.wait(4.8)
     
-    TweenService:Create(LoadingContainer, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(BarBg, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(BarBgStroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
-    TweenService:Create(BarFill, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(LoadingStatus, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-    TweenService:Create(PercentLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-    TweenService:Create(SplashGlow, TweenInfo.new(0.3), {Transparency = 1}):Play()
+    local imageFadeInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    TweenService:Create(LoadingBgImage, imageFadeInfo, {ImageTransparency = 1}):Play()
+    task.wait(0.3)
+    
+    local fadeInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    
+    SplashTitle.Parent = MainFrame
+    SplashTitle.Position = UDim2.new(0.5, -250, 0, 85)
+    SplashTitle.Size = UDim2.new(0, 500, 0, 80)
+    SplashTitle.TextTransparency = 0
+    SplashGlow.Transparency = 0
+
+    TweenService:Create(LoadingOverlay, fadeInfo, {BackgroundTransparency = 1}):Play()
+    TweenService:Create(BarBg, fadeInfo, {BackgroundTransparency = 1}):Play()
+    TweenService:Create(BarBgStroke, fadeInfo, {Transparency = 1}):Play()
+    TweenService:Create(BarFill, fadeInfo, {BackgroundTransparency = 1}):Play()
+    TweenService:Create(LoadingStatus, fadeInfo, {TextTransparency = 1}):Play()
+    TweenService:Create(PercentLabel, fadeInfo, {TextTransparency = 1}):Play()
+    TweenService:Create(SplashGlow, fadeInfo, {Transparency = 1}):Play()
+    
+    task.wait(0.6)
+    LoadingOverlay:Destroy()
     
     MainFrame.Visible = true
     TweenService:Create(MainFrame, TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
@@ -563,12 +699,9 @@ task.spawn(function()
     TweenService:Create(MainStroke, TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
         Transparency = 0
     }):Play()
-    
-    SplashTitle.Parent = MainFrame
-    SplashTitle.Position = UDim2.new(0.5, -250, 0, 95)
-    SplashTitle.Size = UDim2.new(0, 500, 0, 80)
-    SplashTitle.TextTransparency = 0
-    SplashGlow.Transparency = 0
+    TweenService:Create(GlowStroke, TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Transparency = 0
+    }):Play()
     
     TweenService:Create(SplashTitle, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
         TextSize = 26,
@@ -576,9 +709,6 @@ task.spawn(function()
     }):Play()
     
     WelcomeLabel.TextTransparency = 0
-    
-    task.wait(0.4)
-    LoadingContainer:Destroy()
 end)
 
 local dragging, dragInput, dragStart, startPos
@@ -633,8 +763,8 @@ end)
 local MinBtn = Instance.new("TextButton")
 MinBtn.Size = UDim2.new(0, 28, 0, 28)
 MinBtn.Position = UDim2.new(1, -70, 0, 17)
-MinBtn.BackgroundColor3 = Color3.fromRGB(22, 18, 32)
-MinBtn.BackgroundTransparency = 0.3 -- Glass Effekt
+MinBtn.BackgroundColor3 = Color3.fromRGB(16, 12, 24)
+MinBtn.BackgroundTransparency = 0.3
 MinBtn.Text = "—"
 MinBtn.TextColor3 = Color3.fromRGB(216, 180, 254)
 MinBtn.TextSize = 12
@@ -654,8 +784,8 @@ MinStroke.Parent = MinBtn
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 28, 0, 28)
 CloseBtn.Position = UDim2.new(1, -38, 0, 17)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(22, 18, 32)
-CloseBtn.BackgroundTransparency = 0.3 -- Glass Effekt
+CloseBtn.BackgroundColor3 = Color3.fromRGB(16, 12, 24)
+CloseBtn.BackgroundTransparency = 0.3
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(248, 113, 113)
 CloseBtn.TextSize = 12
@@ -683,7 +813,7 @@ end)
 
 CloseBtn.MouseLeave:Connect(function()
     TweenService:Create(CloseBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundColor3 = Color3.fromRGB(22, 18, 32),
+        BackgroundColor3 = Color3.fromRGB(16, 12, 24),
         TextColor3 = Color3.fromRGB(248, 113, 113)
     }):Play()
     TweenService:Create(CloseStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(60, 40, 90)}):Play()
@@ -692,7 +822,7 @@ end)
 MinBtn.MouseEnter:Connect(function()
     playSound(106351605533621)
     TweenService:Create(MinBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundColor3 = Color3.fromRGB(50, 35, 75),
+        BackgroundColor3 = Color3.fromRGB(45, 30, 65),
         TextColor3 = Color3.fromRGB(255, 255, 255)
     }):Play()
     TweenService:Create(MinStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(168, 85, 247)}):Play()
@@ -700,7 +830,7 @@ end)
 
 MinBtn.MouseLeave:Connect(function()
     TweenService:Create(MinBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundColor3 = Color3.fromRGB(22, 18, 32),
+        BackgroundColor3 = Color3.fromRGB(16, 12, 24),
         TextColor3 = Color3.fromRGB(216, 180, 254)
     }):Play()
     TweenService:Create(MinStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(60, 40, 90)}):Play()
@@ -708,12 +838,13 @@ end)
 
 local function closeGUI()
     playSound(6698737249)
-    sendNotification("System", "PyroX Hub fully closed.", 3)
+    sendNotification("System", "Rift Script Hub fully closed.", 3)
     TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
         Size = UDim2.new(0, 150, 0, 100),
         BackgroundTransparency = 1
     }):Play()
     TweenService:Create(MainStroke, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Transparency = 1}):Play()
+    TweenService:Create(GlowStroke, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Transparency = 1}):Play()
     TweenService:Create(BGOverlay, TweenInfo.new(0.35), {BackgroundTransparency = 1}):Play()
     TweenService:Create(blur, TweenInfo.new(0.35), {Size = 0}):Play()
     TweenService:Create(camera, TweenInfo.new(0.35), {FieldOfView = originalFOV}):Play()
@@ -731,6 +862,7 @@ local function minimizeGUI()
         BackgroundTransparency = 1
     }):Play()
     TweenService:Create(MainStroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
+    TweenService:Create(GlowStroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
     TweenService:Create(BGOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
     TweenService:Create(blur, TweenInfo.new(0.3), {Size = 0}):Play()
     TweenService:Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play()
@@ -763,10 +895,11 @@ local function restoreGUI()
     MainFrame.BackgroundTransparency = 1
     
     TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 680, 0, 520),
+        Size = UDim2.new(0, 680, 0, 420),
         BackgroundTransparency = 0.4
     }):Play()
     TweenService:Create(MainStroke, TweenInfo.new(0.4), {Transparency = 0}):Play()
+    TweenService:Create(GlowStroke, TweenInfo.new(0.4), {Transparency = 0}):Play()
     TweenService:Create(BGOverlay, TweenInfo.new(0.4), {BackgroundTransparency = 0.2}):Play()
     TweenService:Create(blur, TweenInfo.new(0.4), {Size = 28}):Play()
     TweenService:Create(camera, TweenInfo.new(0.4), {FieldOfView = originalFOV - 12}):Play()
@@ -778,18 +911,18 @@ ToggleBtn.MouseButton1Click:Connect(restoreGUI)
 
 ToggleBtn.MouseEnter:Connect(function()
     playSound(106351605533621)
-    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(24, 18, 36)}):Play()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(18, 12, 28)}):Play()
 end)
 ToggleBtn.MouseLeave:Connect(function()
-    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(12, 10, 18)}):Play()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(8, 6, 12)}):Play()
 end)
 
 -- Premium Scripts Container
 local ScriptsContainer = Instance.new("Frame")
-ScriptsContainer.Size = UDim2.new(1, -50, 0, 175)
-ScriptsContainer.Position = UDim2.new(0, 25, 0, 165)
-ScriptsContainer.BackgroundColor3 = Color3.fromRGB(16, 14, 22)
-ScriptsContainer.BackgroundTransparency = 0.45 -- Glass Effekt
+ScriptsContainer.Size = UDim2.new(1, -50, 0, 110)
+ScriptsContainer.Position = UDim2.new(0, 25, 0, 155)
+ScriptsContainer.BackgroundColor3 = Color3.fromRGB(12, 9, 18)
+ScriptsContainer.BackgroundTransparency = 0.45
 ScriptsContainer.BorderSizePixel = 0
 ScriptsContainer.Parent = MainFrame
 
@@ -799,27 +932,26 @@ ScriptsCorner.Parent = ScriptsContainer
 
 local ScriptsStroke = Instance.new("UIStroke")
 ScriptsStroke.Color = Color3.fromRGB(50, 30, 70)
-ScriptsStroke.Thickness = 1.5
+ScriptsStroke.Thickness = 1 -- Dünner gemacht (1 statt 1.5)
 ScriptsStroke.Parent = ScriptsContainer
 
 local ScriptsHeader = Instance.new("TextLabel")
 ScriptsHeader.Size = UDim2.new(1, -20, 0, 30)
 ScriptsHeader.Position = UDim2.new(0, 15, 0, 5)
 ScriptsHeader.BackgroundTransparency = 1
-ScriptsHeader.Text = "★ PREMIUM SCRIPTS"
+ScriptsHeader.Text = "★ OUR SCRIPTS"
 ScriptsHeader.TextColor3 = Color3.fromRGB(168, 85, 247)
 ScriptsHeader.TextSize = 12
 ScriptsHeader.Font = Enum.Font.GothamBold
 ScriptsHeader.TextXAlignment = Enum.TextXAlignment.Left
 ScriptsHeader.Parent = ScriptsContainer
 
--- Script Card Funktion
 local function createScriptCard(titleText, descText, yPos, iconId, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -30, 0, 56)
     btn.Position = UDim2.new(0, 15, 0, yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(22, 18, 32)
-    btn.BackgroundTransparency = 0.4 -- Glass Effekt
+    btn.BackgroundColor3 = Color3.fromRGB(16, 12, 24)
+    btn.BackgroundTransparency = 0.4
     btn.Text = ""
     btn.AutoButtonColor = false
     btn.Parent = ScriptsContainer
@@ -830,7 +962,7 @@ local function createScriptCard(titleText, descText, yPos, iconId, callback)
 
     local stroke = Instance.new("UIStroke")
     stroke.Color = Color3.fromRGB(60, 40, 90)
-    stroke.Thickness = 1.5
+    stroke.Thickness = 1
     stroke.Parent = btn
 
     local btnIcon = Instance.new("ImageLabel")
@@ -868,14 +1000,14 @@ local function createScriptCard(titleText, descText, yPos, iconId, callback)
         if not executed then
             playSound(106351605533621)
             TweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(168, 85, 247)}):Play()
-            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(32, 24, 46)}):Play()
+            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(26, 18, 38)}):Play()
         end
     end)
     
     btn.MouseLeave:Connect(function()
         if not executed then
             TweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(60, 40, 90)}):Play()
-            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(22, 18, 32)}):Play()
+            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(16, 12, 24)}):Play()
         end
     end)
 
@@ -895,71 +1027,19 @@ local function createScriptCard(titleText, descText, yPos, iconId, callback)
     return btn
 end
 
-
--- ==========================================
--- DYNAMIC SCRIPT LOADER (NEU)
--- ==========================================
-
--- 1. Universal Script als Fallback konfigurieren
-local universalScript = {
-    Title = "PyroX Universal Script (Down)",
-    Desc = "its down i will make a remake",
-    IconId = 101800459005792,
-    Callback = function()
-        loadstring(game:HttpGet("https://down"))()
-    end
-}
-
--- 2. Spielespezifische Scripts konfigurieren
-local gameScripts = {
-    
-    -- The Walking Dead Online 3
-    [128039018996175] = {
-        Title = "The Walking Death Online 3 Script",
-        Desc = "a script made for twdo3",
-        IconId = 87599473539232,
-        Callback = function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/PyroX5343/RobloxCheats/refs/heads/main/Games/TWDO3.lua"))()
-        end
-    },
-    
-    -- War Tycoon (HIER DIE PLACE ID ÄNDERN!)
-    [0000000000] = { 
-        Title = "War Tycoon Script",
-        Desc = "A nice script for War Tycoon.",
-        IconId = 101800459005792, -- Tausche hier das Icon falls du ein eigenes hast
-        Callback = function()
-            -- HIER DEN LOADSTRING FÜR WAR TYCOON EINTRAGEN:
-            -- loadstring(game:HttpGet("DEINE URL HIER"))()
-            sendNotification("Info", "War Tycoon Script has been executed!", 3)
-        end
-    }
-    
-    -- Du kannst jederzeit weitere Spiele hinzufügen:
-    -- [PLACE_ID_HIER_EINTRAGEN] = { Title = "Name", Desc = "Beschreibung", IconId = 123456, Callback = function() ... end }
-}
-
--- 3. Spiel-Erkennung und Button Erstellung
 local currentPlaceId = game.PlaceId
-local scriptToRun = gameScripts[currentPlaceId]
+local scriptData = Config.GameScripts[currentPlaceId] or Config.UniversalScript
 
-if scriptToRun then
-    -- Spezifisches Game gefunden! Wir zeigen NUR den passenden Button auf der obersten Position (yPos: 40)
-    createScriptCard(scriptToRun.Title, scriptToRun.Desc, 40, scriptToRun.IconId, scriptToRun.Callback)
-else
-    -- Kein spezifisches Game gefunden, nutze Universal Script (yPos: 40)
-    createScriptCard(universalScript.Title, universalScript.Desc, 40, universalScript.IconId, universalScript.Callback)
-end
--- ==========================================
+createScriptCard(scriptData.Title, scriptData.Desc, 40, scriptData.IconId, function()
+    loadstring(game:HttpGet(scriptData.Url))()
+end)
 
-
--- Untere Info-Karten
 local function createInfoCard(title, desc, iconId, xPos)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(0, 195, 0, 85)
-    card.Position = UDim2.new(0, xPos, 0, 355)
-    card.BackgroundColor3 = Color3.fromRGB(16, 14, 22)
-    card.BackgroundTransparency = 0.4 -- Glass Effekt
+    card.Position = UDim2.new(0, xPos, 0, 275)
+    card.BackgroundColor3 = Color3.fromRGB(12, 9, 18)
+    card.BackgroundTransparency = 0.4
     card.BorderSizePixel = 0
     card.Parent = MainFrame
 
@@ -969,7 +1049,7 @@ local function createInfoCard(title, desc, iconId, xPos)
 
     local stroke = Instance.new("UIStroke")
     stroke.Color = Color3.fromRGB(50, 30, 70)
-    stroke.Thickness = 1.2
+    stroke.Thickness = 1
     stroke.Parent = card
 
     local cardIcon = Instance.new("ImageLabel")
@@ -1006,10 +1086,9 @@ createInfoCard("PERFORMANCE", "Optimized for max FPS and play fun with cheats", 
 createInfoCard("SCRIPT  PROTECTED", "Our script is Protected from stealing", 94906293985685, 242)
 createInfoCard("SAVE YOUR TIME", "we make scripts for you", 98620336180634, 460)
 
--- Untere Fußzeile / Status Bar
 local FooterBar = Instance.new("Frame")
 FooterBar.Size = UDim2.new(1, -50, 0, 30)
-FooterBar.Position = UDim2.new(0, 25, 1, -42)
+FooterBar.Position = UDim2.new(0, 25, 1, -38)
 FooterBar.BackgroundTransparency = 1
 FooterBar.Parent = MainFrame
 
@@ -1034,9 +1113,6 @@ PlayersOnline.Font = Enum.Font.GothamBold
 PlayersOnline.TextXAlignment = Enum.TextXAlignment.Center
 PlayersOnline.Parent = FooterBar
 
--- ==========================================
--- USER PROFILE WIDGET (UNTEN RECHTS) (NEU)
--- ==========================================
 local ProfileContainer = Instance.new("Frame")
 ProfileContainer.Size = UDim2.new(0, 140, 1, 0)
 ProfileContainer.Position = UDim2.new(1, -140, 0, 0)
@@ -1046,7 +1122,7 @@ ProfileContainer.Parent = FooterBar
 local ProfAvatar = Instance.new("ImageLabel")
 ProfAvatar.Size = UDim2.new(0, 26, 0, 26)
 ProfAvatar.Position = UDim2.new(1, -26, 0.5, -13)
-ProfAvatar.BackgroundColor3 = Color3.fromRGB(30, 20, 40)
+ProfAvatar.BackgroundColor3 = Color3.fromRGB(20, 12, 30)
 local success, image = pcall(function()
     return Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
 end)
