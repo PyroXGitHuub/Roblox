@@ -19,7 +19,7 @@ if parent:FindFirstChild("SketchGUILibrary") then
 end
 
 local Library = {}
-Library.Version = "v2.1.8"
+Library.Version = "v2.1.9"
 Library.ThemeColor = Library.ThemeColor
 Library.Flags = {}
 Library.SettingsFileName = "config1"
@@ -1018,7 +1018,7 @@ function Library.New(titleText, customThemeColor)
             end
 
             -- 4. Dropdown (Animiert)
-            function SubObj:AddDropdown(text, options, multiSelect, default, callback)
+function SubObj:AddDropdown(text, options, multiSelect, default, callback)
                 local flag = tabName .. "_" .. subTabName .. "_" .. text
                 if Library.Flags[flag] == nil or type(Library.Flags[flag]) ~= (multiSelect and "table" or "string") then
                     if multiSelect then
@@ -1088,31 +1088,41 @@ function Library.New(titleText, customThemeColor)
                 ListLayout.Parent = ListFrame
 
                 local optButtons = {}
-                for _, opt in ipairs(options) do
-                    local OptBtn = Instance.new("TextButton")
-                    OptBtn.Size = UDim2.new(1, -5, 0, 28)
-                    OptBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-                    OptBtn.BorderColor3 = Color3.fromRGB(50, 50, 50)
-                    OptBtn.Font = Enum.Font.SourceSans
-                    OptBtn.Text = opt
-                    OptBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    OptBtn.TextSize = 13
-                    OptBtn.ZIndex = 61
-                    OptBtn.Parent = ListFrame
+                
+                local function createButtons()
+                    for _, btn in pairs(optButtons) do
+                        btn:Destroy()
+                    end
+                    optButtons = {}
 
-                    OptBtn.MouseButton1Click:Connect(function()
-                        if multiSelect then
-                            Library.Flags[flag][opt] = not Library.Flags[flag][opt]
-                            OptBtn.BackgroundColor3 = Library.Flags[flag][opt] and Library.ThemeColor or Color3.fromRGB(30, 30, 30)
-                        else
-                            Library.Flags[flag] = opt
-                            CloseAllPopups()
-                        end
-                        updateButtonText()
-                        if callback then callback(Library.Flags[flag]) end
-                    end)
-                    optButtons[opt] = OptBtn
+                    for _, opt in ipairs(options) do
+                        local OptBtn = Instance.new("TextButton")
+                        OptBtn.Size = UDim2.new(1, -5, 0, 28)
+                        OptBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                        OptBtn.BorderColor3 = Color3.fromRGB(50, 50, 50)
+                        OptBtn.Font = Enum.Font.SourceSans
+                        OptBtn.Text = opt
+                        OptBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        OptBtn.TextSize = 13
+                        OptBtn.ZIndex = 61
+                        OptBtn.Parent = ListFrame
+
+                        OptBtn.MouseButton1Click:Connect(function()
+                            if multiSelect then
+                                Library.Flags[flag][opt] = not Library.Flags[flag][opt]
+                                OptBtn.BackgroundColor3 = Library.Flags[flag][opt] and Library.ThemeColor or Color3.fromRGB(30, 30, 30)
+                            else
+                                Library.Flags[flag] = opt
+                                CloseAllPopups()
+                            end
+                            updateButtonText()
+                            if callback then callback(Library.Flags[flag]) end
+                        end)
+                        optButtons[opt] = OptBtn
+                    end
                 end
+
+                createButtons()
 
                 updateButtonText = function()
                     if multiSelect then
@@ -1159,6 +1169,28 @@ function Library.New(titleText, customThemeColor)
                         if callback then callback(Library.Flags[flag]) end
                     end
                 end)
+
+                local DropdownObj = {}
+                function DropdownObj:Refresh(newOptions)
+                    options = newOptions
+                    targetHeight = math.clamp(#options * 30 + 10, 30, 180)
+                    ListFrame.CanvasSize = UDim2.new(0, 0, 0, #options * 32)
+                    
+                    createButtons()
+
+                    if not multiSelect then
+                        local found = false
+                        for _, opt in ipairs(options) do
+                            if opt == Library.Flags[flag] then found = true break end
+                        end
+                        if not found then
+                            Library.Flags[flag] = options[1] or ""
+                        end
+                    end
+                    updateButtonText()
+                end
+
+                return DropdownObj
             end
 
             -- 5. Filter Button
